@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Cpu, Send, Sparkles, BookOpen, Music, CheckCircle } from 'lucide-react';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const AICoach = () => {
   const [messages, setMessages] = useState([
     {
@@ -24,7 +26,7 @@ const AICoach = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/coach/chat', {
+      const response = await fetch(`${API_BASE}/api/coach/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

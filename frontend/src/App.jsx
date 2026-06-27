@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
+
+// ── Environment-aware API & Socket base URLs ──────────────────────────────────
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 import Navbar from './components/Navbar';
 import WaveformVisualizer from './components/WaveformVisualizer';
 import ParticleBackground from './components/ParticleBackground';
@@ -124,7 +128,7 @@ const App = () => {
   // Socket lifecycle
   useEffect(() => {
     if (user) {
-      const s = io('http://localhost:5000');
+      const s = io(SOCKET_URL);
       setSocket(s);
       return () => s.disconnect();
     }
@@ -133,7 +137,7 @@ const App = () => {
 
   const fetchProfile = async (token) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/profile', {
+      const res = await fetch(`${API_BASE}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -156,7 +160,7 @@ const App = () => {
         ? { emailOrUsername: emailInput, password: passwordInput }
         : { username: usernameInput, email: emailInput, password: passwordInput };
     try {
-      const res = await fetch(`http://localhost:5000/api/auth/${endpoint}`, {
+      const res = await fetch(`${API_BASE}/api/auth/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -182,7 +186,7 @@ const App = () => {
     e.preventDefault();
     setAuthError(''); setAuthSuccess('');
     try {
-      const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailInput }),
@@ -210,7 +214,7 @@ const App = () => {
          const result = await signInWithPopup(auth, provider);
          const token = await result.user.getIdToken();
          // Send token to backend /api/auth/google for verification:
-         const res = await fetch('http://localhost:5000/api/auth/google', {
+         const res = await fetch(`${API_BASE}/api/auth/google`, {
            method: 'POST',
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({ idToken: token })
@@ -233,7 +237,7 @@ const App = () => {
       // Simulate a network response latency for standard OAuth handshake
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: mockUsername, email: mockEmail, password: 'hb_sso_google_pass_2026' }),

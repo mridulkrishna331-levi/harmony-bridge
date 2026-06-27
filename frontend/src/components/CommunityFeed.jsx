@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Share2, ThumbsUp, MessageCircle, Send, Globe, Radio, Plus, Users, X } from 'lucide-react';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const CommunityFeed = ({ user, socket, setActiveView, setTargetRoomId }) => {
   const [posts, setPosts] = useState([]);
   const [newPostContent, setNewPostContent] = useState('');
@@ -38,7 +40,7 @@ const CommunityFeed = ({ user, socket, setActiveView, setTargetRoomId }) => {
   const fetchFeed = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/community/feed', {
+      const res = await fetch(`${API_BASE}/api/community/feed`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -59,7 +61,7 @@ const CommunityFeed = ({ user, socket, setActiveView, setTargetRoomId }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/community/posts', {
+      const res = await fetch(`${API_BASE}/api/community/posts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +89,7 @@ const CommunityFeed = ({ user, socket, setActiveView, setTargetRoomId }) => {
   const handleLike = async (postId) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/community/posts/${postId}/like`, {
+      const res = await fetch(`${API_BASE}/api/community/posts/${postId}/like`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Upload, FileAudio, AlertCircle, Sparkles, BarChart2, Compass, Play, X } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const SkillAnalyzer = ({ user, onUpdateClips }) => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -71,7 +73,7 @@ const SkillAnalyzer = ({ user, onUpdateClips }) => {
         setUploadProgress((prev) => (prev < 85 ? prev + 15 : prev));
       }, 300);
 
-      const res = await fetch('http://localhost:5000/api/analysis/upload', {
+      const res = await fetch(`${API_BASE}/api/analysis/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

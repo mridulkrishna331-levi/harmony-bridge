@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, History, Trophy, Sparkles, Sliders, Volume2, Save, FileAudio, Settings, X } from 'lucide-react';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const Dashboard = ({ user, onUpdateUser, setActiveView, setTargetRoomId }) => {
   const [bio, setBio] = useState(user?.bio || '');
   const [skillLevel, setSkillLevel] = useState(user?.skillLevel || 'Intermediate');
@@ -115,7 +117,7 @@ const Dashboard = ({ user, onUpdateUser, setActiveView, setTargetRoomId }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/auth/profile', {
+      const res = await fetch(`${API_BASE}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
