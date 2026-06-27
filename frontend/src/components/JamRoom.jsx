@@ -182,9 +182,14 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
     socket.on('user-connected', async ({ socketId, userId, username, avatarUrl }) => {
       console.log('User connected:', username, socketId);
       
-      // Avoid duplicate PC if already exists
+      // Avoid duplicate PC — check both socketId ref map AND peers state userId
       if (peerConnections.current[socketId]) {
-        console.warn('PC already exists for socket', socketId, '— skipping duplicate user-connected offer.');
+        console.log('[WebRTC] PC already exists for socket', socketId, '— skipping.');
+        return;
+      }
+      const alreadyInPeers = peers.some(p => p.userId === userId);
+      if (alreadyInPeers) {
+        console.log('[WebRTC] Peer userId already tracked:', userId, '— skipping duplicate offer.');
         return;
       }
 
@@ -1215,57 +1220,67 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
         )}
       </div>
 
-      {/* ── Overlay Translucent Actions Control Bar ──────────────────── */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-md px-6 py-3 rounded-full z-20 shadow-xl border border-black/5 flex items-center gap-4">
+      {/* ── High-Contrast Charcoal Control Bar (Nothing-Phone style) ───── */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#18181B] px-5 py-3 rounded-2xl z-20 shadow-2xl border border-white/[0.06] flex items-center gap-3">
+
+        {/* Divider helper */}
+        <div className="h-7 w-px bg-white/10 mx-1" />
+
         {/* Toggle Mic */}
         <button
           onClick={toggleMute}
-          className={`p-3 rounded-full transition-all active:scale-95 ${
-            isMuted ? 'bg-red-500 text-white shadow-md' : 'bg-black/5 hover:bg-black/10 text-charcoal'
+          className={`p-3 rounded-xl transition-all duration-150 active:scale-90 ${
+            isMuted
+              ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/50 shadow-lg shadow-red-500/20'
+              : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white'
           }`}
-          title={isMuted ? "Unmute Mic" : "Mute Mic"}
+          title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
         >
-          {isMuted ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-black" />}
+          {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
         </button>
 
         {/* Toggle Cam */}
         <button
           onClick={toggleCam}
-          className={`p-3 rounded-full transition-all active:scale-95 ${
-            isCamOff ? 'bg-red-500 text-white shadow-md' : 'bg-black/5 hover:bg-black/10 text-charcoal'
+          className={`p-3 rounded-xl transition-all duration-150 active:scale-90 ${
+            isCamOff
+              ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/50 shadow-lg shadow-red-500/20'
+              : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white'
           }`}
-          title={isCamOff ? "Turn Cam On" : "Turn Cam Off"}
+          title={isCamOff ? 'Turn Cam On' : 'Turn Cam Off'}
         >
-          {isCamOff ? <VideoOff className="w-4 h-4 text-white" /> : <Video className="w-4 h-4 text-black" />}
+          {isCamOff ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
         </button>
 
         {/* Screen Share */}
         <button
           onClick={toggleScreenShare}
-          className={`p-3 rounded-full transition-all active:scale-95 ${
-            isScreenSharing ? 'bg-electricBlue text-white shadow-md' : 'bg-black/5 hover:bg-black/10 text-charcoal'
+          className={`p-3 rounded-xl transition-all duration-150 active:scale-90 ${
+            isScreenSharing
+              ? 'bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/50'
+              : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white'
           }`}
           title="Share Screen"
         >
-          <ScreenShare className={`w-4 h-4 ${isScreenSharing ? 'text-white' : 'text-black'}`} />
+          <ScreenShare className="w-4 h-4" />
         </button>
 
         {/* Record Session Toggle */}
         {isRecording ? (
           <button
             onClick={stopRecording}
-            className="p-3 rounded-full bg-red-500 text-white animate-pulse shadow-md"
+            className="p-3 rounded-xl bg-red-500/20 text-red-400 ring-1 ring-red-500/50 animate-pulse transition-all active:scale-90"
             title="Stop Recording"
           >
-            <Square className="w-4 h-4 fill-white text-white" />
+            <Square className="w-4 h-4 fill-red-400" />
           </button>
         ) : (
           <button
             onClick={startRecording}
-            className="p-3 rounded-full bg-black/5 hover:bg-black/10 text-charcoal"
+            className="p-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white transition-all active:scale-90"
             title="Record Session"
           >
-            <Save className="w-4 h-4 text-black" />
+            <Save className="w-4 h-4" />
           </button>
         )}
 
@@ -1274,120 +1289,144 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
           <a
             href={recordingBlobUrl}
             download={`harmony_bridge_jam_${roomId}.webm`}
-            className="p-3 rounded-full bg-green-500 text-white hover:opacity-90 transition-all flex items-center justify-center shadow-md"
+            className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/50 hover:bg-emerald-500/30 transition-all flex items-center justify-center"
             title="Download Recording"
           >
-            <Download className="w-4 h-4 text-white" />
+            <Download className="w-4 h-4" />
           </a>
         )}
 
         {/* Chat Toggle Button */}
         <button
           onClick={() => setChatPanelOpen(prev => !prev)}
-          className={`p-3 rounded-full transition-all active:scale-95 relative ${
-            chatPanelOpen ? 'bg-neonPurple text-white shadow-md' : 'bg-black/5 hover:bg-black/10 text-charcoal'
+          className={`p-3 rounded-xl transition-all duration-150 active:scale-90 relative ${
+            chatPanelOpen
+              ? 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/50'
+              : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white'
           }`}
-          title="Toggle Chat Sidebar"
+          title="Toggle Chat"
         >
-          <MessageSquare className={`w-4 h-4 ${chatPanelOpen ? 'text-white' : 'text-black'}`} />
+          <MessageSquare className="w-4 h-4" />
           {messages.length > 0 && !chatPanelOpen && (
-            <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse border border-white" />
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse border border-[#18181B]" />
           )}
         </button>
 
-        {/* Leave Studio Room */}
+        <div className="h-7 w-px bg-white/10 mx-1" />
+
+        {/* Leave Studio Room — distinct red pill */}
         <button
           onClick={handleLeaveCall}
-          className="p-3 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all active:scale-95 shadow-md"
+          className="px-4 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-xs tracking-wide transition-all duration-150 active:scale-90 shadow-lg shadow-red-500/30 flex items-center gap-2"
           title="Leave Jam Room"
         >
-          <PhoneOff className="w-4 h-4 text-white" />
+          <PhoneOff className="w-4 h-4" />
+          <span className="hidden sm:inline">Leave</span>
         </button>
       </div>
 
-      {/* ── Toggleable Sliding Chat Sidebar Panel ─────────────────────── */}
-      <div 
-        className={`fixed right-0 top-0 h-full w-80 bg-[#111116] border-l border-white/5 z-30 shadow-2xl transition-transform duration-300 flex flex-col ${
+      {/* ── Crisp White Chat Sidebar Panel (cream-theme contrast) ───────── */}
+      <div
+        className={`fixed right-0 top-0 h-full w-[340px] bg-white border-l border-black/[0.07] z-30 shadow-[−4px_0_24px_rgba(0,0,0,0.08)] transition-transform duration-300 ease-in-out flex flex-col ${
           chatPanelOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Chat Header */}
-        <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
-          <span className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-electricBlue" />
+        <div className="px-5 py-4 border-b border-black/[0.06] flex items-center justify-between shrink-0 bg-white">
+          <span className="text-sm font-bold text-neutral-800 flex items-center gap-2 tracking-tight">
+            <div className="w-7 h-7 rounded-lg bg-[#18181B] flex items-center justify-center shrink-0">
+              <MessageSquare className="w-3.5 h-3.5 text-white" />
+            </div>
             Studio Chat
           </span>
           <button
             onClick={() => setChatPanelOpen(false)}
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg bg-black/[0.05] hover:bg-black/[0.1] text-neutral-500 hover:text-neutral-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Messages List viewport */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 scrollbar-thin">
-          {messages.map((msg, i) => (
-            <div key={i} className="flex flex-col animate-fadeIn">
-              <div className="flex items-baseline justify-between">
-                <span className={`text-[11px] font-bold ${msg.sender === user._id || msg.sender === user.id ? 'text-electricBlue' : 'text-neonPurple'}`}>
-                  {msg.senderName}
-                </span>
-                <span className="text-[9px] text-white/30">
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-              <div className="bg-white/5 border border-white/5 rounded-xl px-3 py-2 mt-1 text-xs text-white/90 leading-relaxed break-words">
-                {msg.content}
-              </div>
-            </div>
-          ))}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 min-h-0 bg-[#FDFBF7]">
           {messages.length === 0 && (
-            <div className="bg-white/5 border border-white/5 rounded-xl p-4 text-center text-white/40 text-xs my-4 mx-2">
-              <span>No chat messages. Introduce yourself!</span>
+            <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
+              <div className="w-10 h-10 rounded-full bg-black/[0.05] flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-neutral-400" />
+              </div>
+              <p className="text-xs font-semibold text-neutral-400">No messages yet</p>
+              <p className="text-[11px] text-neutral-400/70">Introduce yourself to the jam room!</p>
             </div>
           )}
+          {messages.map((msg, i) => {
+            const isOwn = msg.sender === user._id || msg.sender === user.id;
+            return (
+              <div key={i} className={`flex flex-col gap-1 ${isOwn ? 'items-end' : 'items-start'}`}>
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-[11px] font-bold ${isOwn ? 'text-[#18181B]' : 'text-violet-700'}`}>
+                    {isOwn ? 'You' : msg.senderName}
+                  </span>
+                  <span className="text-[10px] text-neutral-400">
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
+                  isOwn
+                    ? 'bg-[#18181B] text-white rounded-tr-sm'
+                    : 'bg-white text-neutral-800 border border-black/[0.08] shadow-sm rounded-tl-sm'
+                }`}>
+                  {msg.content}
+                </div>
+              </div>
+            );
+          })}
           <div ref={chatEndRef} />
         </div>
 
-        {/* Emoji selection & Message Input */}
-        <div className="p-4 border-t border-white/5 shrink-0 relative bg-[#0D0D12]">
-          {showEmojiPicker && (
-            <div className="absolute bottom-full left-4 bg-[#121218] border border-white/10 rounded-2xl p-3 flex gap-2 shadow-2xl mb-2 flex-wrap max-w-[240px] z-40">
+        {/* Emoji picker tray */}
+        {showEmojiPicker && (
+          <div className="border-t border-black/[0.06] bg-white px-4 py-3">
+            <div className="flex flex-wrap gap-1.5">
               {emojis.map((emo) => (
                 <button
                   key={emo}
                   onClick={() => addEmoji(emo)}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-lg hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 active:scale-95 ${getEmojiStyle(emo)}`}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center text-base hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150 active:scale-95 ${getEmojiStyle(emo)}`}
                 >
                   {emo}
                 </button>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
-          <div className="flex items-center gap-2">
+        {/* Message input bar */}
+        <div className="px-4 py-4 border-t border-black/[0.06] shrink-0 bg-white">
+          <div className="flex items-center gap-2 bg-black/[0.04] border border-black/[0.08] rounded-2xl px-3 py-2 focus-within:border-[#18181B] focus-within:bg-white transition-all">
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all border border-white/5"
+              className={`p-1.5 rounded-lg transition-all ${
+                showEmojiPicker ? 'bg-[#18181B] text-white' : 'text-neutral-400 hover:text-neutral-700 hover:bg-black/[0.06]'
+              }`}
             >
               <Smile className="w-4 h-4" />
             </button>
-            
+
             <input
               type="text"
-              placeholder="Message jam room..."
+              placeholder="Message the room..."
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-              className="flex-1 bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs text-white placeholder-white/20 focus:outline-none focus:border-electricBlue"
+              className="flex-1 bg-transparent text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none min-w-0 py-1"
             />
 
             <button
               onClick={handleSendMessage}
-              className="p-2.5 rounded-xl bg-gradient-to-r from-neonPurple to-electricBlue text-white hover:opacity-90 transition-all shadow-glow-blue"
+              disabled={!messageInput.trim()}
+              className="w-8 h-8 rounded-xl bg-[#18181B] flex items-center justify-center text-white disabled:opacity-30 hover:bg-black transition-all active:scale-90 shrink-0"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
