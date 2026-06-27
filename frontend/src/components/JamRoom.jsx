@@ -152,18 +152,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
           });
         }
 
-        // Create offer
-        try {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          socket.emit('signal', {
-            roomId: joinedRoomId,
-            targetSocketId: peer.socketId,
-            signalData: offer
-          });
-        } catch (err) {
-          console.error('Error creating offer for peer:', err);
-        }
+        // NOTE: Do not createOffer here! The existing peer receiving 'user-connected' will initiate the offer to prevent dual-offer glare collision.
 
         newPeers.push({
           socketId: peer.socketId,
@@ -249,7 +238,11 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
           }
           await pc.setRemoteDescription(new RTCSessionDescription(signalData));
         } else if (signalData.candidate) {
-          await pc.addIceCandidate(new RTCIceCandidate(signalData));
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(signalData));
+          } catch (iceErr) {
+            console.warn('Early/unhandled ICE candidate ignored:', iceErr.message);
+          }
         }
       } catch (err) {
         console.error('Error handling signaling:', err);
@@ -1221,10 +1214,10 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
       </div>
 
       {/* ── High-Contrast Charcoal Control Bar (Nothing-Phone style) ───── */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#18181B] px-5 py-3 rounded-2xl z-20 shadow-2xl border border-white/[0.06] flex items-center gap-3">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#18181B] px-5 py-3 rounded-2xl z-20 shadow-2xl border border-[#FFFFFF]/15 flex items-center gap-3">
 
         {/* Divider helper */}
-        <div className="h-7 w-px bg-white/10 mx-1" />
+        <div className="h-7 w-px bg-[#FFFFFF]/15 mx-1" />
 
         {/* Toggle Mic */}
         <button
@@ -1232,7 +1225,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
           className={`p-3 rounded-xl transition-all duration-150 active:scale-90 ${
             isMuted
               ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/50 shadow-lg shadow-red-500/20'
-              : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white'
+              : 'bg-[#FFFFFF]/15 hover:bg-[#FFFFFF]/25 text-[#FFFFFF] shadow-sm'
           }`}
           title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
         >
@@ -1245,7 +1238,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
           className={`p-3 rounded-xl transition-all duration-150 active:scale-90 ${
             isCamOff
               ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/50 shadow-lg shadow-red-500/20'
-              : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white'
+              : 'bg-[#FFFFFF]/15 hover:bg-[#FFFFFF]/25 text-[#FFFFFF] shadow-sm'
           }`}
           title={isCamOff ? 'Turn Cam On' : 'Turn Cam Off'}
         >
@@ -1258,7 +1251,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
           className={`p-3 rounded-xl transition-all duration-150 active:scale-90 ${
             isScreenSharing
               ? 'bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/50'
-              : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white'
+              : 'bg-[#FFFFFF]/15 hover:bg-[#FFFFFF]/25 text-[#FFFFFF] shadow-sm'
           }`}
           title="Share Screen"
         >
@@ -1277,7 +1270,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
         ) : (
           <button
             onClick={startRecording}
-            className="p-3 rounded-xl bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white transition-all active:scale-90"
+            className="p-3 rounded-xl bg-[#FFFFFF]/15 hover:bg-[#FFFFFF]/25 text-[#FFFFFF] shadow-sm transition-all active:scale-90"
             title="Record Session"
           >
             <Save className="w-4 h-4" />
@@ -1302,7 +1295,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
           className={`p-3 rounded-xl transition-all duration-150 active:scale-90 relative ${
             chatPanelOpen
               ? 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/50'
-              : 'bg-white/[0.07] hover:bg-white/[0.14] text-white/80 hover:text-white'
+              : 'bg-[#FFFFFF]/15 hover:bg-[#FFFFFF]/25 text-[#FFFFFF] shadow-sm'
           }`}
           title="Toggle Chat"
         >
@@ -1312,16 +1305,16 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
           )}
         </button>
 
-        <div className="h-7 w-px bg-white/10 mx-1" />
+        <div className="h-7 w-px bg-[#FFFFFF]/15 mx-1" />
 
         {/* Leave Studio Room — distinct red pill */}
         <button
           onClick={handleLeaveCall}
-          className="px-4 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-xs tracking-wide transition-all duration-150 active:scale-90 shadow-lg shadow-red-500/30 flex items-center gap-2"
+          className="px-4 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-[#FFFFFF] font-bold text-xs tracking-wide transition-all duration-150 active:scale-90 shadow-lg shadow-red-500/30 flex items-center gap-2"
           title="Leave Jam Room"
         >
-          <PhoneOff className="w-4 h-4" />
-          <span className="hidden sm:inline">Leave</span>
+          <PhoneOff className="w-4 h-4 text-[#FFFFFF]" />
+          <span className="hidden sm:inline text-[#FFFFFF]">Leave</span>
         </button>
       </div>
 
