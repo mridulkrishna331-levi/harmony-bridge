@@ -74,6 +74,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
 
   const localVideoRef = useRef(null);
   const peerConnections = useRef({}); // socketId -> RTCPeerConnection
+  const iceCandidatesQueue = useRef({}); // socketId -> Array of RTCIceCandidate
   const localStreamRef = useRef(null);
   const metronomeInterval = useRef(null);
   const metronomeAudioCtx = useRef(null);
@@ -224,6 +225,18 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
       try {
         if (signalData.type === 'offer') {
           await pc.setRemoteDescription(new RTCSessionDescription(signalData));
+          
+          // Process early buffered candidates
+          const queue = iceCandidatesQueue.current[senderSocketId] || [];
+          for (const candidate of queue) {
+            try {
+              await pc.addIceCandidate(candidate);
+            } catch (err) {
+              console.warn('Error adding buffered ICE candidate:', err.message);
+            }
+          }
+          iceCandidatesQueue.current[senderSocketId] = [];
+
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           socket.emit('signal', {
@@ -237,11 +250,31 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
             return;
           }
           await pc.setRemoteDescription(new RTCSessionDescription(signalData));
+
+          // Process early buffered candidates
+          const queue = iceCandidatesQueue.current[senderSocketId] || [];
+          for (const candidate of queue) {
+            try {
+              await pc.addIceCandidate(candidate);
+            } catch (err) {
+              console.warn('Error adding buffered ICE candidate:', err.message);
+            }
+          }
+          iceCandidatesQueue.current[senderSocketId] = [];
         } else if (signalData.candidate) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(signalData));
-          } catch (iceErr) {
-            console.warn('Early/unhandled ICE candidate ignored:', iceErr.message);
+          const candidate = new RTCIceCandidate(signalData);
+          if (pc.remoteDescription && pc.remoteDescription.type) {
+            try {
+              await pc.addIceCandidate(candidate);
+            } catch (iceErr) {
+              console.warn('Error adding ICE candidate:', iceErr.message);
+            }
+          } else {
+            if (!iceCandidatesQueue.current[senderSocketId]) {
+              iceCandidatesQueue.current[senderSocketId] = [];
+            }
+            iceCandidatesQueue.current[senderSocketId].push(candidate);
+            console.log('Buffered early ICE candidate for socket:', senderSocketId);
           }
         }
       } catch (err) {
@@ -298,6 +331,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
         peerConnections.current[socketId].close();
         delete peerConnections.current[socketId];
       }
+      delete iceCandidatesQueue.current[socketId];
       setPeers(prev => prev.filter(p => p.socketId !== socketId));
     });
 
@@ -448,6 +482,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
       }
       peerConnections.current = {};
     }
+    iceCandidatesQueue.current = {};
 
     // 4. Clean up metronome timeouts, intervals, audio context, and canvas timer fallbacks
     isPlayingRef.current = false;
@@ -497,17 +532,20 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
 
     pc.ontrack = (event) => {
       console.log('Received track from peer:', targetUsername, event.streams[0]);
+      const remoteStream = event.streams[0];
       setPeers(prev => {
+        // Force a new MediaStream instance containing all tracks so React + RemoteVideo detect the reference change and play/render immediately
+        const streamInstance = remoteStream ? new MediaStream(remoteStream.getTracks()) : null;
         const exists = prev.some(p => p.socketId === targetSocketId);
         if (exists) {
-          return prev.map(p => p.socketId === targetSocketId ? { ...p, stream: event.streams[0] } : p);
+          return prev.map(p => p.socketId === targetSocketId ? { ...p, stream: streamInstance } : p);
         }
         return [...prev, {
           socketId: targetSocketId,
           userId: targetUserId,
           username: targetUsername,
           avatarUrl: '',
-          stream: event.streams[0],
+          stream: streamInstance,
           isMuted: false,
           isCamOff: false
         }];
