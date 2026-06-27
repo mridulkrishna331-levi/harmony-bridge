@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Share2, ThumbsUp, MessageCircle, Send, Globe, Radio, Plus, Users, X } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://harmony-bridge.onrender.com';
 
 const CommunityFeed = ({ user, socket, setActiveView, setTargetRoomId }) => {
   const [posts, setPosts] = useState([]);

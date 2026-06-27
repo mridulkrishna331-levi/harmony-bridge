@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
 
 // ── Environment-aware API & Socket base URLs ──────────────────────────────────
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://harmony-bridge.onrender.com';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://harmony-bridge.onrender.com';
 import Navbar from './components/Navbar';
 import WaveformVisualizer from './components/WaveformVisualizer';
 import ParticleBackground from './components/ParticleBackground';

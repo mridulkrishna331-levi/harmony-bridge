@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Upload, FileAudio, AlertCircle, Sparkles, BarChart2, Compass, Play, X } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://harmony-bridge.onrender.com';
 
 const SkillAnalyzer = ({ user, onUpdateClips }) => {
   const [file, setFile] = useState(null);

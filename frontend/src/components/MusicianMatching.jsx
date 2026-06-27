@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Flame, MapPin, Sparkles, MessageSquare, Volume2, Plus, Check, X, Users } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://harmony-bridge.onrender.com';
 
 const MusicianMatching = ({ user, socket, setActiveView, setTargetRoomId }) => {
   const [recommendations, setRecommendations] = useState([]);

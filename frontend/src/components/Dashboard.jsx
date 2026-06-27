@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, History, Trophy, Sparkles, Sliders, Volume2, Save, FileAudio, Settings, X } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://harmony-bridge.onrender.com';
 
 const Dashboard = ({ user, onUpdateUser, setActiveView, setTargetRoomId }) => {
   const [bio, setBio] = useState(user?.bio || '');
