@@ -680,7 +680,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
       localStreamRef.current.getAudioTracks().forEach(track => track.enabled = !state);
     }
     if (socket) {
-      socket.emit('media-toggle', { roomId: joinedRoomId, userId: user.id, type: 'audio', state });
+      socket.emit('media-toggle', { roomId: joinedRoomId, userId: user.id || user._id, type: 'audio', state });
     }
   };
 
@@ -691,7 +691,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
       localStreamRef.current.getVideoTracks().forEach(track => track.enabled = !state);
     }
     if (socket) {
-      socket.emit('media-toggle', { roomId: joinedRoomId, userId: user.id, type: 'video', state });
+      socket.emit('media-toggle', { roomId: joinedRoomId, userId: user.id || user._id, type: 'video', state });
     }
   };
 
@@ -806,7 +806,7 @@ const JamRoom = ({ user, socket, roomId, setTargetRoomId, setActiveView }) => {
     if (socket) {
       socket.emit('chat-message', {
         roomId: joinedRoomId,
-        userId: user.id,
+        userId: user.id || user._id,
         username: user.username,
         content: messageInput
       });
